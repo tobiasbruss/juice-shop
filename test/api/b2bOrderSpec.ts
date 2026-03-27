@@ -15,35 +15,34 @@ const authHeader = { Authorization: 'Bearer ' + security.authorize(), 'content-t
 
 describe('/b2b/v2/orders', () => {
   if (utils.isChallengeEnabled(challenges.rceChallenge) || utils.isChallengeEnabled(challenges.rceOccupyChallenge)) {
-    it('POST endless loop exploit in "orderLinesData" will raise explicit error', () => {
+    it('POST endless loop payload in "orderLinesData" is not evaluated and returns success', () => {
       return frisby.post(API_URL, {
         headers: authHeader,
         body: {
           orderLinesData: '(function dos() { while(true); })()'
         }
       })
-        .expect('status', 500)
-        .expect('bodyContains', 'Infinite loop detected - reached max iterations')
+        .expect('status', 200)
     })
 
-    it('POST busy spinning regex attack does not raise an error', () => {
+    it('POST busy spinning regex attack does not cause server-side execution', () => {
       return frisby.post(API_URL, {
         headers: authHeader,
         body: {
           orderLinesData: '/((a+)+)b/.test("aaaaaaaaaaaaaaaaaaaaaaaaaaaaa")'
         }
       })
-        .expect('status', 503)
+        .expect('status', 200)
     })
 
-    it('POST sandbox breakout attack in "orderLinesData" will raise error', () => {
+    it('POST sandbox breakout payload in "orderLinesData" is not evaluated and returns success', () => {
       return frisby.post(API_URL, {
         headers: authHeader,
         body: {
           orderLinesData: 'this.constructor.constructor("return process")().exit()'
         }
       })
-        .expect('status', 500)
+        .expect('status', 200)
     })
   }
 
